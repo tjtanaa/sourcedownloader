@@ -1,9 +1,11 @@
 name: Create Release
 
 on:
-  push:
-    branches:
-      - main  # or your default branch name
+  workflow_dispatch:
+    inputs:
+      repository_url:
+        required: true
+        description: The URL of the repository to convert
 
 jobs:
   create_release:
@@ -12,6 +14,26 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
+      - name: Clone target
+        run: |
+          git clone ${{ inputs.repository_url }}
+      - name: Zip repository
+        run: |
+          ls | xargs zip -r folder.zip
+          
+      - name: Convert to hex
+        run: |
+          xxd -p folder.zip > folder.txt
+          
+      - name: Split
+        run: |
+          split -b 50m folder.txt folder.txt_
+
+      - name: Zip chunks
+        run: |
+          zip -r chunks.zip folder.txt_*
+          rm -rf *.txt_
+          
       - name: Generate release tag
         id: tag
         run: |
